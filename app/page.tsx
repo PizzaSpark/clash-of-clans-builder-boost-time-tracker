@@ -1,65 +1,145 @@
-import Image from "next/image";
+"use client";
+
+import { AddUpgradeForm } from "@/components/add-upgrade-form";
+import { UpgradeCard } from "@/components/upgrade-card";
+import { SettingsDialog } from "@/components/settings-dialog";
+import { Button } from "@/components/ui/button";
+import { useUpgrades, useNotification } from "@/lib/hooks";
+import { useSettings } from "@/lib/settings-context";
+import { useAudioNotification } from "@/lib/audio-notification";
+import { Trash2, Bell } from "lucide-react";
 
 export default function Home() {
+  const { settings } = useSettings();
+  const {
+    upgrades,
+    addUpgrade,
+    removeUpgrade,
+    pauseUpgrade,
+    resumeUpgrade,
+    markNotified,
+    clearCompleted,
+  } = useUpgrades();
+
+  const { playSound } = useAudioNotification(settings.notificationSound);
+  const { requestNotificationPermission } = useNotification(
+    upgrades,
+    settings.alertThresholdMinutes,
+    playSound,
+    markNotified
+  );
+
+  const handleAddUpgrade = (name: string, originalMinutes: number) => {
+    addUpgrade(name, originalMinutes, settings.boostMultiplier);
+  };
+
+  const activeUpgrades = upgrades.filter((u) => {
+    const now = Date.now();
+    return u.finishTime > now;
+  });
+
+  const completedUpgrades = upgrades.filter((u) => {
+    const now = Date.now();
+    return u.finishTime <= now;
+  });
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+              CoC Builder Boost Tracker
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Track your Clash of Clans upgrades with builder potion timing
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={requestNotificationPermission}
+              title="Enable browser notifications"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <Bell className="h-4 w-4" />
+            </Button>
+            <SettingsDialog />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Add Upgrade Form */}
+        <div className="mb-8">
+          <AddUpgradeForm onAddUpgrade={handleAddUpgrade} />
         </div>
-      </main>
+
+        {/* Active Upgrades */}
+        {activeUpgrades.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                Active Timers ({activeUpgrades.length})
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {activeUpgrades.map((upgrade) => (
+                <UpgradeCard
+                  key={upgrade.id}
+                  upgrade={upgrade}
+                  onPause={() => pauseUpgrade(upgrade.id)}
+                  onResume={() => resumeUpgrade(upgrade.id)}
+                  onRemove={() => removeUpgrade(upgrade.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Completed Upgrades */}
+        {completedUpgrades.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                Completed ({completedUpgrades.length})
+              </h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearCompleted}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear All
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {completedUpgrades.map((upgrade) => (
+                <UpgradeCard
+                  key={upgrade.id}
+                  upgrade={upgrade}
+                  onPause={() => {}}
+                  onResume={() => {}}
+                  onRemove={() => removeUpgrade(upgrade.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {upgrades.length === 0 && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">⚔️</div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              No upgrades being tracked
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Add your first upgrade above to start tracking!
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
