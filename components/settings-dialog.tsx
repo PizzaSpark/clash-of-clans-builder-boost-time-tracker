@@ -29,10 +29,6 @@ export function SettingsDialog() {
   const [open, setOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleBoostMultiplierChange = (value: number[]) => {
-    updateSettings({ boostMultiplier: value[0] });
-  };
-
   const handleAlertThresholdChange = (value: number[]) => {
     updateSettings({ alertThresholdMinutes: value[0] });
   };
@@ -71,25 +67,6 @@ export function SettingsDialog() {
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4">
-          {/* Boost Multiplier */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Boost Multiplier</Label>
-              <span className="text-sm font-medium">{settings.boostMultiplier}×</span>
-            </div>
-            <Slider
-              value={[settings.boostMultiplier]}
-              onValueChange={handleBoostMultiplierChange}
-              min={1}
-              max={20}
-              step={1}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Builder potions are typically 10×. Adjust if using different boosts.
-            </p>
-          </div>
-
           {/* Alert Threshold */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -97,7 +74,12 @@ export function SettingsDialog() {
                 <Bell className="h-4 w-4" />
                 Alert Threshold
               </Label>
-              <span className="text-sm font-medium">{settings.alertThresholdMinutes} min</span>
+              <div className="text-right">
+                <span className="text-sm font-medium">{settings.alertThresholdMinutes} min</span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  ({settings.alertThresholdMinutes * settings.boostMultiplier} min original)
+                </span>
+              </div>
             </div>
             <Slider
               value={[settings.alertThresholdMinutes]}
@@ -108,7 +90,7 @@ export function SettingsDialog() {
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">
-              Get notified when an upgrade has this much time remaining.
+              Get notified when an upgrade has this much boosted time remaining.
             </p>
           </div>
 

@@ -123,10 +123,16 @@ export function getCommonTimezones(): string[] {
     'Europe/Moscow',
     'Asia/Dubai',
     'Asia/Kolkata',
+    'Asia/Bangkok',
+    'Asia/Singapore',
+    'Asia/Manila',
+    'Asia/Jakarta',
+    'Asia/Hong_Kong',
     'Asia/Shanghai',
     'Asia/Tokyo',
     'Asia/Seoul',
     'Australia/Sydney',
+    'Australia/Melbourne',
     'Pacific/Auckland',
   ];
 }

@@ -3,6 +3,7 @@
 import { AddUpgradeForm } from "@/components/add-upgrade-form";
 import { UpgradeCard } from "@/components/upgrade-card";
 import { SettingsDialog } from "@/components/settings-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useUpgrades, useNotification } from "@/lib/hooks";
 import { useSettings } from "@/lib/settings-context";
@@ -36,7 +37,7 @@ export default function Home() {
   const activeUpgrades = upgrades.filter((u) => {
     const now = Date.now();
     return u.finishTime > now;
-  });
+  }).sort((a, b) => a.finishTime - b.finishTime); // Sort by finish time, earliest first
 
   const completedUpgrades = upgrades.filter((u) => {
     const now = Date.now();
@@ -65,6 +66,7 @@ export default function Home() {
             >
               <Bell className="h-4 w-4" />
             </Button>
+            <ThemeToggle />
             <SettingsDialog />
           </div>
         </div>
